@@ -1,5 +1,13 @@
 import React, {useState, useEffect} from 'react';
-import {View, StyleSheet, Image, Pressable, Text, Animated} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Image,
+  Pressable,
+  Text,
+  Animated,
+  AppState,
+} from 'react-native';
 import {Easing} from 'react-native-reanimated';
 import COLORS from '../../styles/colors.ts';
 import {observer} from 'mobx-react';
@@ -21,8 +29,13 @@ const SpinWheel = () => {
   const [rotation, setRotation] = useState(new Animated.Value(0));
   const [isSpinning, setIsSpinning] = useState(false);
   const [timer, setTimer] = useState(null);
-  const {remainingTime, setRemainingTime, result, setResult} =
-    useStore().productStore;
+  const {
+    remainingTime,
+    setRemainingTime,
+    result,
+    setResult,
+    updateRemainingTime,
+  } = useStore().productStore;
 
   const sectors = [
     '20%',
@@ -45,13 +58,27 @@ const SpinWheel = () => {
 
   useEffect(() => {
     if (remainingTime > 0) {
+      updateRemainingTime();
+
       const interval = setInterval(() => {
-        setRemainingTime(remainingTime - 1);
+        updateRemainingTime();
       }, 1000);
 
       return () => clearInterval(interval);
     }
   }, [remainingTime]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        updateRemainingTime();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const formatTime = (seconds: any) => {
     const hours = Math.floor(seconds / 3600);

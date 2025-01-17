@@ -23,6 +23,7 @@ class ProductStore {
   } = {category: '', id: '', image: '', name: '', price: 0};
   search: string = '';
   remainingTime: number = 0;
+  lastUpdateTime: number = Date.now();
   result: any = null;
 
   constructor() {
@@ -30,8 +31,11 @@ class ProductStore {
 
     makePersistable(this, {
       name: 'ProductStore',
-      properties: ['remainingTime', 'result'],
+      properties: ['remainingTime', 'result', 'lastUpdateTime'],
+      // properties: [],
       storage: AsyncStorage,
+    }).then(() => {
+      this.updateRemainingTime();
     });
   }
 
@@ -94,6 +98,7 @@ class ProductStore {
 
   setRemainingTime = (time: number) => {
     this.remainingTime = time;
+    this.lastUpdateTime = Date.now();
   };
 
   removeFromCart = (productId: string) => {
@@ -124,6 +129,16 @@ class ProductStore {
       return sum + discount;
     }, 0);
   }
+
+  updateRemainingTime = () => {
+    const currentTime = Date.now();
+    const timePassed = Math.floor((currentTime - this.lastUpdateTime) / 1000);
+
+    if (this.remainingTime > 0) {
+      this.remainingTime = Math.max(0, this.remainingTime - timePassed);
+      this.lastUpdateTime = currentTime;
+    }
+  };
 }
 
 export default ProductStore;
